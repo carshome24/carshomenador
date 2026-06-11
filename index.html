@@ -44,7 +44,6 @@
         .btn-up { background: var(--blue); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .btn-finish { background: var(--primary); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
 
-        /* Style for the Add New Row button */
         .btn-add-row { background: var(--orange); color: white; border: none; padding: 12px 25px; margin: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
         .btn-add-row:hover { background: #d35400; }
 
@@ -137,7 +136,6 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzi96hU09M5cM7QmtcVXztPO1LfRbvQVYLCe6MunzFD2rQwsxThw7GMqJbQKTy1EeabBw/exec"; 
-    // Secure token added here to align with backend verification logic
     const WEB_APP_TOKEN = "Honda@1979";
     
     let currentData = [];
@@ -151,7 +149,13 @@
     }
 
     async function init() {
-        fetch('https://worldtimeapi.org/api/timezone/Africa/Casablanca').then(r => r.json()).then(d => { if(d) officialTime = new Date(d.datetime); });
+        // Wrapped clock setup in try/catch so it doesn't break table rendering if the third-party time API drops out
+        try {
+            const r = await fetch('https://worldtimeapi.org/api/timezone/Africa/Casablanca');
+            const d = await r.json();
+            if(d) officialTime = new Date(d.datetime);
+        } catch(err) { console.log("Time API dropped out, relying on system clock."); }
+
         try {
             const res = await fetch(SCRIPT_URL);
             currentData = await res.json();
@@ -256,28 +260,29 @@
 
     function upd(r, c, v) { currentData[r][c] = v; sync(); }
 
-    /* Helper function to generate a new row safely */
     function addNewRow() {
-        // Appends a blank array structure matching the 23 standard data columns 
         const newBlankRow = Array(23).fill("");
         currentData.push(newBlankRow);
         renderTable();
-        sync(); // Triggers existing database synchronization to Google Sheet immediately
+        sync(); 
     }
 
     async function sync() {
         isSaving = true;
         updateStatus("SAVING...", "#f39c12");
         try {
+            // Mode added to explicitly avoid network handshaking blocks with Apps Script configurations
             await fetch(SCRIPT_URL, { 
-                method: "POST", 
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify({ token: WEB_APP_TOKEN, action: "saveAll", data: currentData }) 
             });
             updateStatus("LIVE", "#2ecc71");
             isSaving = false;
         } catch(e) { 
             updateStatus("ERROR - RETRYING...", "#e74c3c"); 
-            setTimeout(sync, 2000);
+            setTimeout(sync, 3000);
         }
     }
 
