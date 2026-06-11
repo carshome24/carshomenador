@@ -44,6 +44,10 @@
         .btn-up { background: var(--blue); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .btn-finish { background: var(--primary); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
 
+        /* Style for the Add New Row button */
+        .btn-add-row { background: var(--orange); color: white; border: none; padding: 12px 25px; margin: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-add-row:hover { background: #d35400; }
+
         .console { background: #2c3e50; color: white; padding: 30px 15px; margin-top: 20px; }
         .search-grid { display: flex; flex-direction: column; gap: 15px; align-items: center; justify-content: center; }
         @media (min-width: 768px) { .search-grid { flex-direction: row; } }
@@ -98,6 +102,8 @@
         <tbody id="tableBody"></tbody>
     </table>
 </div>
+
+<button class="btn-add-row" onclick="addNewRow()">+ ADD NEW ROW</button>
 
 <div class="console">
     <h2 style="margin-bottom: 20px;">HISTORY SEARCH</h2>
@@ -249,6 +255,15 @@
     }
 
     function upd(r, c, v) { currentData[r][c] = v; sync(); }
+
+    /* Helper function to generate a new row safely */
+    function addNewRow() {
+        // Appends a blank array structure matching the 23 standard data columns 
+        const newBlankRow = Array(23).fill("");
+        currentData.push(newBlankRow);
+        renderTable();
+        sync(); // Triggers existing database synchronization to Google Sheet immediately
+    }
 
     async function sync() {
         isSaving = true;
