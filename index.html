@@ -50,21 +50,21 @@
         .search-box { background: white; padding: 10px; border-radius: 8px; color: black; display: flex; gap: 10px; align-items: center; min-width: 280px; }
         .btn-search { background: var(--blue); color: white; border: none; padding: 12px 35px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-reset { background: #e74c3c; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-   .btn-tools {
-    background: #2c3e50; /* Matches your --primary color */
-    color: white;
-    text-decoration: none;
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-weight: bold;
-    border: 2px solid #eee;
-    transition: 0.3s;
-}
+        .btn-tools {
+            background: #2c3e50;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            border: 2px solid #eee;
+            transition: 0.3s;
+        }
 
-.btn-tools:hover {
-    background: #34495e;
-    border-color: var(--blue);
-}
+        .btn-tools:hover {
+            background: #34495e;
+            border-color: var(--blue);
+        }
     </style>
 </head>
 <body onbeforeunload="return handleExit()">
@@ -73,8 +73,8 @@
     <div class="logo-row"><img src="logo.jpg" alt="ELITE" class="main-logo"></div>
     <div class="status-row">
         <a href="https://glamcarsnador.github.io/utility-website/" target="_blank" rel="noopener noreferrer" class="btn-tools">
-        TOOLS
-    </a>
+            TOOLS
+        </a>
         <div class="clock-display">
             <div id="live-date">--/--/--</div>
             <div id="live-clock" style="color: var(--orange); font-size: 20px;">00:00:00</div>
@@ -130,7 +130,10 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6fmFEuSwBDWW94EDnak3AZvyyqavn9Umyo5HQb2e4FhsotTZ9VznU_fPcidvAJjsWAA/exec"; 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUP6w5bklYyUoWHCLKgGp6aLiXhaKnkCy2P1yLHl5sdMMKGk6p7YKGztnNQzOraOhcHw/exec"; 
+    // Secure token added here to align with backend verification logic
+    const WEB_APP_TOKEN = "Honda@1979";
+    
     let currentData = [];
     let officialTime = new Date();
     let isSaving = false;
@@ -251,7 +254,10 @@
         isSaving = true;
         updateStatus("SAVING...", "#f39c12");
         try {
-            await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "saveAll", data: currentData }) });
+            await fetch(SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ token: WEB_APP_TOKEN, action: "saveAll", data: currentData }) 
+            });
             updateStatus("LIVE", "#2ecc71");
             isSaving = false;
         } catch(e) { 
@@ -269,7 +275,10 @@
         const reader = new FileReader();
         reader.onload = async (e) => {
             const base64 = e.target.result.split(',')[1];
-            const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "upload", row: i, filename: file.name, mimeType: file.type, base64: base64 })});
+            const res = await fetch(SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ token: WEB_APP_TOKEN, action: "upload", row: i, filename: file.name, mimeType: file.type, base64: base64 })
+            });
             currentData[i][6] = await res.text();
             document.getElementById(`up-ld-${i}`).style.display = "none";
             isSaving = false;
@@ -285,7 +294,10 @@
         const q = document.getElementById('uSearch').value.toLowerCase();
         const sD = parseEliteDate(document.getElementById('dateStart').value);
         const eD = parseEliteDate(document.getElementById('dateEnd').value);
-        const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getHistory" }) });
+        const res = await fetch(SCRIPT_URL, { 
+            method: "POST", 
+            body: JSON.stringify({ token: WEB_APP_TOKEN, action: "getHistory" }) 
+        });
         const history = await res.json();
         const filtered = history.filter((r, idx) => {
             if(idx === 0) return false;
@@ -326,7 +338,10 @@
         if(confirm("MOVE TO HISTORY?")) {
             isSaving = true;
             updateStatus("ARCHIVING...", "#f39c12");
-            await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "archive", row: i, data: currentData[i], officialTime: officialTime.toISOString() })});
+            await fetch(SCRIPT_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ token: WEB_APP_TOKEN, action: "archive", row: i, data: currentData[i], officialTime: officialTime.toISOString() })
+            });
             isSaving = false;
             location.reload();
         }
