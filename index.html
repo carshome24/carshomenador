@@ -4,7 +4,7 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CarHome24 WebApp</title>
+    <title>ELITE CAR V9.2 - KM TRACKING</title>
     <style>
         :root { 
             --primary: #2c3e50; --orange: #e67e22; --green: #2ecc71; 
@@ -44,30 +44,27 @@
         .btn-up { background: var(--blue); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
         .btn-finish { background: var(--primary); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
 
-        .btn-add-row { background: var(--orange); color: white; border: none; padding: 12px 25px; margin: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
-        .btn-add-row:hover { background: #d35400; }
-
         .console { background: #2c3e50; color: white; padding: 30px 15px; margin-top: 20px; }
         .search-grid { display: flex; flex-direction: column; gap: 15px; align-items: center; justify-content: center; }
         @media (min-width: 768px) { .search-grid { flex-direction: row; } }
         .search-box { background: white; padding: 10px; border-radius: 8px; color: black; display: flex; gap: 10px; align-items: center; min-width: 280px; }
         .btn-search { background: var(--blue); color: white; border: none; padding: 12px 35px; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .btn-reset { background: #e74c3c; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; cursor: pointer; }
-        .btn-tools {
-            background: #2c3e50;
-            color: white;
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-weight: bold;
-            border: 2px solid #eee;
-            transition: 0.3s;
-        }
+   .btn-tools {
+    background: #2c3e50; /* Matches your --primary color */
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    border: 2px solid #eee;
+    transition: 0.3s;
+}
 
-        .btn-tools:hover {
-            background: #34495e;
-            border-color: var(--blue);
-        }
+.btn-tools:hover {
+    background: #34495e;
+    border-color: var(--blue);
+}
     </style>
 </head>
 <body onbeforeunload="return handleExit()">
@@ -75,9 +72,9 @@
 <div class="header-section">
     <div class="logo-row"><img src="logo.jpg" alt="ELITE" class="main-logo"></div>
     <div class="status-row">
-        <a href="https://carshome24.github.io/utility_website/" target="_blank" rel="noopener noreferrer" class="btn-tools">
-            TOOLS
-        </a>
+        <a href="https://glamcarsnador.github.io/utility-website/" target="_blank" rel="noopener noreferrer" class="btn-tools">
+        TOOLS
+    </a>
         <div class="clock-display">
             <div id="live-date">--/--/--</div>
             <div id="live-clock" style="color: var(--orange); font-size: 20px;">00:00:00</div>
@@ -101,8 +98,6 @@
         <tbody id="tableBody"></tbody>
     </table>
 </div>
-
-<button class="btn-add-row" onclick="addNewRow()">+ ADD NEW ROW</button>
 
 <div class="console">
     <h2 style="margin-bottom: 20px;">HISTORY SEARCH</h2>
@@ -136,8 +131,6 @@
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjBDoAYNfltROjndNyGyfyL4tmwaexPe4PrgQrRJeS-vgyWM0quG3SubDxmtrpRLb2/exec"; 
-    const WEB_APP_TOKEN = "Honda@1979";
-    
     let currentData = [];
     let officialTime = new Date();
     let isSaving = false;
@@ -149,13 +142,7 @@
     }
 
     async function init() {
-        // Wrapped clock setup in try/catch so it doesn't break table rendering if the third-party time API drops out
-        try {
-            const r = await fetch('https://worldtimeapi.org/api/timezone/Africa/Casablanca');
-            const d = await r.json();
-            if(d) officialTime = new Date(d.datetime);
-        } catch(err) { console.log("Time API dropped out, relying on system clock."); }
-
+        fetch('https://worldtimeapi.org/api/timezone/Africa/Casablanca').then(r => r.json()).then(d => { if(d) officialTime = new Date(d.datetime); });
         try {
             const res = await fetch(SCRIPT_URL);
             currentData = await res.json();
@@ -260,29 +247,16 @@
 
     function upd(r, c, v) { currentData[r][c] = v; sync(); }
 
-    function addNewRow() {
-        const newBlankRow = Array(23).fill("");
-        currentData.push(newBlankRow);
-        renderTable();
-        sync(); 
-    }
-
     async function sync() {
         isSaving = true;
         updateStatus("SAVING...", "#f39c12");
         try {
-            // Mode added to explicitly avoid network handshaking blocks with Apps Script configurations
-            await fetch(SCRIPT_URL, { 
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ token: WEB_APP_TOKEN, action: "saveAll", data: currentData }) 
-            });
+            await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "saveAll", data: currentData }) });
             updateStatus("LIVE", "#2ecc71");
             isSaving = false;
         } catch(e) { 
             updateStatus("ERROR - RETRYING...", "#e74c3c"); 
-            setTimeout(sync, 3000);
+            setTimeout(sync, 2000);
         }
     }
 
@@ -295,10 +269,7 @@
         const reader = new FileReader();
         reader.onload = async (e) => {
             const base64 = e.target.result.split(',')[1];
-            const res = await fetch(SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ token: WEB_APP_TOKEN, action: "upload", row: i, filename: file.name, mimeType: file.type, base64: base64 })
-            });
+            const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "upload", row: i, filename: file.name, mimeType: file.type, base64: base64 })});
             currentData[i][6] = await res.text();
             document.getElementById(`up-ld-${i}`).style.display = "none";
             isSaving = false;
@@ -314,10 +285,7 @@
         const q = document.getElementById('uSearch').value.toLowerCase();
         const sD = parseEliteDate(document.getElementById('dateStart').value);
         const eD = parseEliteDate(document.getElementById('dateEnd').value);
-        const res = await fetch(SCRIPT_URL, { 
-            method: "POST", 
-            body: JSON.stringify({ token: WEB_APP_TOKEN, action: "getHistory" }) 
-        });
+        const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getHistory" }) });
         const history = await res.json();
         const filtered = history.filter((r, idx) => {
             if(idx === 0) return false;
@@ -358,10 +326,7 @@
         if(confirm("MOVE TO HISTORY?")) {
             isSaving = true;
             updateStatus("ARCHIVING...", "#f39c12");
-            await fetch(SCRIPT_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ token: WEB_APP_TOKEN, action: "archive", row: i, data: currentData[i], officialTime: officialTime.toISOString() })
-            });
+            await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "archive", row: i, data: currentData[i], officialTime: officialTime.toISOString() })});
             isSaving = false;
             location.reload();
         }
